@@ -1,0 +1,26 @@
+#!/usr/bin/env ruby
+
+require 'open-uri'
+require 'nokogiri'
+require 'thor'
+require 'net/smtp'
+require 'yaml'
+
+class Packt < Thor
+
+  URL = "https://www.packtpub.com/packt/offers/free-learning/"
+  FROM = 'self@tidyfoxdev.com'
+  TO = YAML.load_file('phone.yml')[0]
+
+  desc "fetch", "fetches the current free title and emails it"
+  def fetch
+    html = Nokogiri::HTML(open(URL))
+    title = html.at_css('.dotd-title h2').children[0].text.strip
+    msg = "Pack Pub free book today: #{title}\n#{URL}"
+    Net::SMTP.start('localhost') do |smtp|
+      smtp.send_message msg, FROM, TO
+    end
+  end
+end
+
+Packt.start(ARGV)
